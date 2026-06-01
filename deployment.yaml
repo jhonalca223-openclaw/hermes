@@ -115,6 +115,35 @@ spec:
               echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
               chmod 600 /opt/data/.git-credentials
 
+              # ── Kubeconfig persistente (token auto-refrescable via exec) ──
+              mkdir -p /opt/data/.kube
+              printf '%s\n' \
+                'apiVersion: v1' \
+                'kind: Config' \
+                'current-context: hermes' \
+                'clusters:' \
+                '- cluster:' \
+                '    certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt' \
+                '    server: https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}' \
+                '  name: hermes-cluster' \
+                'contexts:' \
+                '- context:' \
+                '    cluster: hermes-cluster' \
+                '    namespace: hermes' \
+                '    user: hermes-sa' \
+                '  name: hermes' \
+                'users:' \
+                '- name: hermes-sa' \
+                '  user:' \
+                '    exec:' \
+                '      apiVersion: client.authentication.k8s.io/v1beta1' \
+                '      command: sh' \
+                '      args:' \
+                '      - -c' \
+                '      - token=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) \&\& printf '\''{"apiVersion":"client.authentication.k8s.io/v1beta1","kind":"ExecCredential","status":{"token":"%s"}}'\'' "\$token"' \
+                > /opt/data/.kube/config
+              chmod 600 /opt/data/.kube/config
+
               # ── Chown final ───────────────────────────────────
               chown -R ${HERMES_UID}:${HERMES_UID} /opt/data
           env:
@@ -180,7 +209,7 @@ spec:
 
             # ── Kubernetes (autogestión vía kubeconfig) ───────────
             - name: KUBECONFIG
-              value: /opt/data/kubeconfig/config
+              value: /opt/data/.kube/config
             # ── Playwright (GUI Testing) ────────────────────────────
             - name: PYTHONPATH
               value: /opt/data/.pip-packages
@@ -210,10 +239,6 @@ spec:
             # Datos persistentes (memorias, sesiones, skills, .env, workspace)
             - name: hermes-data
               mountPath: /opt/data
-            # Kubeconfig para acceso al cluster
-            - name: hermes-kubeconfig
-              mountPath: /opt/data/kubeconfig
-              readOnly: true
           resources:
             requests:
               cpu: "500m"
@@ -246,7 +271,4 @@ spec:
         - name: hermes-data
           persistentVolumeClaim:
             claimName: hermes-data
-        - name: hermes-kubeconfig
-          secret:
-            secretName: hermes-kubeconfig
-            defaultMode: 0400
+
