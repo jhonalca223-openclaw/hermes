@@ -177,6 +177,10 @@ spec:
             - name: GIT_CONFIG_GLOBAL
               value: /opt/data/.gitconfig
 
+            # ── Kubeconfig (kubectl) ──────────────────────────────────
+            - name: KUBECONFIG
+              value: /opt/data/.kube/config
+
             # ── Playwright (GUI Testing) ────────────────────────────
             - name: PYTHONPATH
               value: /opt/data/.pip-packages
