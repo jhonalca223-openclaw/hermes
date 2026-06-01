@@ -15,7 +15,7 @@ data:
     # Model Configuration — DeepSeek via OpenAI-compatible endpoint
     # =============================================================================
     model:
-      default: "deepseek/deepseek-chat"
+      default: "deepseek-v4-flash"
       provider: "custom"
       base_url: "https://api.deepseek.com/v1"
       # context_length: 65536   # Auto-detected; set manually if needed
