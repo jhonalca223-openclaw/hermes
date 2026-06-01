@@ -76,15 +76,15 @@ spec:
               fi
 
               # ── Git config global en PVC (persistente entre reinicios) ──
-              # gitconfig con tabs reales (^I en los valores indentados)
-              GITCONFIG_CONTENT='[user]
-	name = Hermes Agent 🌀
-	email = hermes@openclaw.local
-[safe]
-	directory = /opt/data/workspace/hermes-repo
-[credential]
-	helper = store --file /opt/data/.git-credentials'
-              printf '%b' "$GITCONFIG_CONTENT" > /opt/data/.gitconfig
+              printf '%s\n' \
+                '[user]' \
+                '  name = Hermes Agent' \
+                '  email = hermes@openclaw.local' \
+                '[safe]' \
+                '  directory = /opt/data/workspace/hermes-repo' \
+                '[credential]' \
+                '  helper = store --file /opt/data/.git-credentials' \
+                > /opt/data/.gitconfig
               chmod 644 /opt/data/.gitconfig
               # Credential helper con PAT en el PVC
               echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
