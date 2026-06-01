@@ -22,6 +22,7 @@ spec:
         app.kubernetes.io/component: gateway
         app.kubernetes.io/part-of: hermes
     spec:
+      serviceAccount: hermes-sa
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-workspace
@@ -177,6 +178,9 @@ spec:
             - name: GIT_CONFIG_GLOBAL
               value: /opt/data/.gitconfig
 
+            # ── Kubernetes (autogestión vía kubeconfig) ───────────
+            - name: KUBECONFIG
+              value: /opt/data/kubeconfig/config
             # ── Playwright (GUI Testing) ────────────────────────────
             - name: PYTHONPATH
               value: /opt/data/.pip-packages
@@ -206,6 +210,10 @@ spec:
             # Datos persistentes (memorias, sesiones, skills, .env, workspace)
             - name: hermes-data
               mountPath: /opt/data
+            # Kubeconfig para acceso al cluster
+            - name: hermes-kubeconfig
+              mountPath: /opt/data/kubeconfig
+              readOnly: true
           resources:
             requests:
               cpu: "500m"
@@ -238,3 +246,7 @@ spec:
         - name: hermes-data
           persistentVolumeClaim:
             claimName: hermes-data
+        - name: hermes-kubeconfig
+          secret:
+            secretName: hermes-kubeconfig
+            defaultMode: 0400
