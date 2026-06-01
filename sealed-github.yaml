@@ -1,0 +1,14 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: hermes-github
+  namespace: hermes
+spec:
+  encryptedData:
+    GITHUB_PAT: AgCTduuClrmLdotp0WleWQEftsMRxpF2wAg4Y9mciAWriNjcBUcBq/rsPsKjgfFZEWl8Ig51aVzQG1h3ozA1Cw3duM18c7maXKqVuUMz6KGeKBry5fkyCulsxyA5NVDoAUOoy/CFnH5+xQDyyAoGsZur7UnxnWvsS4To2lt11UxsqL+GcPd8gkQAeECsP8mEExot9gCyAX39jePDqc0BqYM6JYO4appqrwUYCbvurIjQnQWtjTL5j5E6Ge7MwFzTlGITJtIr+nK7A5OuHgIaKkxTOyyH8ZzvyN9QOipSnoSByP+IoR5tODVjk78CjTevSfjR/mwXjfxugZa0iBneRFnN2FKBXT8j1YxcPlUe55cX9BDYs+PACDCXHr7IakwtJMtmrZIatLMPAIyRLLzkW2lbYH/BBfVPuLe7bXaWXFv1iLsAHi41maTh8ID9B2A4nxTWyLHi0kIZfiU8QZeRm92cdS1TXder/pqHELq6QlSFflG9H4w9dfbem7CrH+iuiS7Dg9gbjQdbWyH2U2YHsTidvVzG73me9G/UPsaTfUT+PAtEZY6c4dg7J8Yipvysbp6OFIf+OCAxO0p1VpPILb7v25xfr6tXrAT30eTCyw3tA62TNoslgFmnwGhynR4O1xLxUUlFDPitU3sudYfQSHLSIP3IfYsW6TMUdhHFEttBPf7qpP5XM2bpxAmiTLNW6UWnziKLFW1ANirUgOxSvyGf8F9m6V2Gs6Rir9atNmeDOBskTKXceRPHaWXocNR8BQDybMFkDVi1Zhv8uKrD3ogIEFco5dyfipgmU4plEicqYFoYEepyDxcsDLOBN9s=
+  template:
+    metadata:
+      name: hermes-github
+      namespace: hermes
+    type: Opaque

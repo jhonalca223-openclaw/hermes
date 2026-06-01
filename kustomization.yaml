@@ -7,9 +7,11 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - pvc.yaml
-  - deployment.yaml
   - service.yaml
   - virtualservice.yaml
+  - deployment.yaml
+  - sealed-secrets.yaml
+  - sealed-github.yaml
 
-# Secret no incluido por defecto — aplicar manualmente o via External Secrets
-# - secret.yaml
+# Secrets sellados vía Bitnami Sealed Secrets
+# Los valores originales SOLO existen en Kubernetes, nunca en git
