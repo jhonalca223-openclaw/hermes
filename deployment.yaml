@@ -30,9 +30,10 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              # Crear directorios con el mismo UID que hermes (10000)
-              # para evitar que el stage2-hook haga chown -R sobre node_modules
               HERMES_UID=$(id -u hermes 2>/dev/null || echo 10000)
+              REPO_DIR="/opt/data/workspace/hermes-repo"
+              
+              # ── Directorios base ──────────────────────────────
               mkdir -p /opt/data/workspace \
                 /opt/data/memories \
                 /opt/data/skills \
@@ -42,7 +43,8 @@ spec:
                 /opt/data/.pip-packages \
                 /opt/data/.playwright/browsers
               chmod 755 /opt/data/workspace
-              # Pre-instalar Playwright si no está en el PVC
+
+              # ── Playwright (si no está instalado) ─────────────
               if [ ! -f /opt/data/.playwright/.installed ]; then
                 echo "[init] Instalando Playwright en PVC..."
                 uv pip install --python /opt/hermes/.venv/bin/python \
@@ -57,8 +59,39 @@ spec:
               else
                 echo "[init] Playwright ya instalado en PVC"
               fi
-              # Chownear el PVC al UID de hermes para evitar chown masivo
+
+              # ── GitHub: clonar repo si no existe ──────────────
+              if [ ! -d "$REPO_DIR/.git" ]; then
+                echo "[init] Clonando repositorio Hermes..."
+                rm -rf "$REPO_DIR" 2>/dev/null
+                git clone \
+                  https://jhonalca223-openclaw:${GITHUB_PAT}@github.com/jhonalca223-openclaw/hermes.git \
+                  "$REPO_DIR" 2>&1
+                if [ $? -eq 0 ]; then
+                  echo "[init] Repo clonado correctamente"
+                fi
+              else
+                echo "[init] Repo ya clonado, haciendo pull..."
+                cd "$REPO_DIR" && git pull 2>&1 | tail -3
+              fi
+
+              # ── Git config global para Hermes ──────────────────
+              git config --global user.name "Hermes Agent 🌀"
+              git config --global user.email "hermes@openclaw.local"
+              # Credential helper con PAT en memoria
+              git config --global credential.helper "store --file /opt/data/.git-credentials"
+              echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
+              chmod 600 /opt/data/.git-credentials
+
+              # ── Chown final ───────────────────────────────────
               chown -R ${HERMES_UID}:${HERMES_UID} /opt/data
+          env:
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-github
+                  key: GITHUB_PAT
+                  optional: false
           volumeMounts:
             - name: hermes-data
               mountPath: /opt/data
@@ -103,6 +136,13 @@ spec:
               value: "9119"
             - name: HERMES_DASHBOARD_INSECURE
               value: "true"
+            # ── GitHub (autogestión de repo) ───────────────────────
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-github
+                  key: GITHUB_PAT
+                  optional: false
             # ── Playwright (GUI Testing) ────────────────────────────
             - name: PYTHONPATH
               value: /opt/data/.pip-packages
