@@ -75,11 +75,18 @@ spec:
                 cd "$REPO_DIR" && git pull 2>&1 | tail -3
               fi
 
-              # ── Git config global para Hermes ──────────────────
-              git config --global user.name "Hermes Agent 🌀"
-              git config --global user.email "hermes@openclaw.local"
-              # Credential helper con PAT en memoria
-              git config --global credential.helper "store --file /opt/data/.git-credentials"
+              # ── Git config global en PVC (persistente entre reinicios) ──
+              cat > /opt/data/.gitconfig << GITCONFIGEOF
+[user]
+	name = Hermes Agent 🌀
+	email = hermes@openclaw.local
+[safe]
+	directory = /opt/data/workspace/hermes-repo
+[credential]
+	helper = store --file /opt/data/.git-credentials
+GITCONFIGEOF
+              chmod 644 /opt/data/.gitconfig
+              # Credential helper con PAT en el PVC
               echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
               chmod 600 /opt/data/.git-credentials
 
@@ -143,6 +150,11 @@ spec:
                   name: hermes-github
                   key: GITHUB_PAT
                   optional: false
+            - name: GIT_CONFIG_GLOBAL
+              value: /opt/data/.gitconfig
+            - name: HOME
+              value: /root
+
             # ── Playwright (GUI Testing) ────────────────────────────
             - name: PYTHONPATH
               value: /opt/data/.pip-packages
