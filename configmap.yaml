@@ -23,6 +23,24 @@ data:
     # max_tokens: 8192
 
     # =============================================================================
+    # MCP Servers — Tools externos vía Model Context Protocol
+    # =============================================================================
+    mcp_servers:
+      # ── Context7 — Documentación de packages npm ───────────────────
+      context7:
+        command: "npx"
+        args: ["-y", "@upstash/context7-mcp"]
+        enabled: true
+        description: "Contexto y documentación de packages npm en el agente"
+
+      # ── Kubernetes — Interacción con clúster K8s ───────────────────
+      kubernetes:
+        command: "npx"
+        args: ["-y", "mcp-server-kubernetes"]
+        enabled: true
+        description: "Interactúa con clústeres K8s via kubectl"
+
+    # =============================================================================
     # Terminal Tool — Local dentro del container
     # =============================================================================
     terminal:
@@ -54,17 +72,37 @@ data:
       allow_all_users: false
 
     # =============================================================================
-    # Memory — SQLite persistente
+    # Memory — SQLite persistente con FTS5 y tagging granular
     # =============================================================================
     memory:
       backend: "sqlite"
       fts5: true
+      # Tags para organización granular por proyecto/contexto
+      # Los tags se añaden en las entradas de memoria vía:
+      #   memory(action="add", content="... #proyecto-x")
+      # Y se filtran con session_search(query="#proyecto-x")
+      #
+      # Para memoria por proyecto, usar naming:
+      #   #hermes-config  → Configuración de Hermes
+      #   #redsocial      → Proyecto Secretos App
+      #   #k8s            → Cluster Kubernetes
+      #   #infra          → Infraestructura general
 
     # =============================================================================
-    # Skills — Básicos
+    # Skills — Creación automática + habilidades específicas
     # =============================================================================
     skills:
       auto_create: true
+
+    # =============================================================================
+    # Plugins — Módulos opcionales
+    # =============================================================================
+    plugins:
+      memory:
+        # Providers disponibles: builtin (default), honcho, mem0
+        # Para activar: hermes memory setup (modo interactivo)
+        # luego instalar: uv pip install honcho-ai o uv pip install mem0ai
+        provider: ""
 
   SOUL.md: |
     # SOUL.md — Hermes Agent 🌀
@@ -87,3 +125,7 @@ data:
     - No ejecuto comandos destructivos sin confirmación
     - No comparto información sensible
     - Opero bajo las reglas de mi operador
+
+    ## Skills Instaladas
+    - **nodejs-dev**: Desarrollo Node.js (Express/Nest, testing, debugging)
+    - **php-dev**: Desarrollo PHP (Laravel/Composer, artisan, PHPUnit)
