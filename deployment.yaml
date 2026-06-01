@@ -58,6 +58,12 @@ spec:
                   name: hermes-secrets
                   key: OPENAI_API_KEY
                   optional: false
+            - name: DEEPSEEK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: DEEPSEEK_API_KEY
+                  optional: false
             # ── Telegram Bot ─────────────────────────────────────
             - name: TELEGRAM_BOT_TOKEN
               valueFrom:
