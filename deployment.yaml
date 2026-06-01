@@ -25,8 +25,8 @@ spec:
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-workspace
-          image: nousresearch/hermes-agent:latest
-          imagePullPolicy: Always
+          image: nousresearch/hermes-agent:v2026.5.29.2
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
             - |
@@ -42,8 +42,8 @@ spec:
               mountPath: /opt/data
       containers:
         - name: hermes
-          image: nousresearch/hermes-agent:latest
-          imagePullPolicy: Always
+          image: nousresearch/hermes-agent:v2026.5.29.2
+          imagePullPolicy: IfNotPresent
           args: ["gateway", "start"]
           env:
             # ── Model Provider (DeepSeek) ────────────────────────
