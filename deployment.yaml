@@ -1,246 +1,240 @@
-{
-  "apiVersion": "apps/v1",
-  "kind": "Deployment",
-  "metadata": {
-    "name": "hermes-agent",
-    "namespace": "hermes",
-    "labels": {
-      "app.kubernetes.io/name": "hermes-agent",
-      "app.kubernetes.io/part-of": "hermes",
-      "app.kubernetes.io/component": "gateway"
-    }
-  },
-  "spec": {
-    "replicas": 1,
-    "strategy": {
-      "type": "Recreate"
-    },
-    "selector": {
-      "matchLabels": {
-        "app.kubernetes.io/name": "hermes-agent",
-        "app.kubernetes.io/component": "gateway"
-      }
-    },
-    "template": {
-      "metadata": {
-        "labels": {
-          "app.kubernetes.io/name": "hermes-agent",
-          "app.kubernetes.io/component": "gateway",
-          "app.kubernetes.io/part-of": "hermes"
-        }
-      },
-      "spec": {
-        "serviceAccount": "hermes-sa",
-        "terminationGracePeriodSeconds": 30,
-        "initContainers": [
-          {
-            "name": "init-workspace",
-            "image": "nousresearch/hermes-agent:v2026.5.29.2",
-            "imagePullPolicy": "IfNotPresent",
-            "command": [
-              "sh",
-              "-c"
-            ],
-            "args": [
-              "HERMES_UID=$(id -u hermes 2>/dev/null || echo 10000)\nREPO_DIR=\"/opt/data/workspace/hermes-repo\"\n\nmkdir -p /opt/data/workspace /opt/data/memories /opt/data/skills /opt/data/cron /opt/data/sessions /opt/data/logs /opt/data/.pip-packages /opt/data/.playwright/browsers /opt/data/.kube /opt/data/bin\nchmod 755 /opt/data/workspace\n\n# kubectl\nif [ ! -f /opt/data/bin/kubectl ]; then\n  echo \"[init] Descargando kubectl...\"\n  KUBECTL_VERSION=$(curl -sL https://dl.k8s.io/release/stable.txt)\n  curl -sLO \"https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/arm64/kubectl\"\n  chmod +x kubectl && mv kubectl /opt/data/bin/kubectl\nfi\n\n# Playwright\nif [ ! -f /opt/data/.playwright/.installed ]; then\n  echo \"[init] Instalando Playwright...\"\n  uv pip install --python /opt/hermes/.venv/bin/python --target /opt/data/.pip-packages playwright 2>&1 | tail -1\n  PLAYWRIGHT_BROWSERS_PATH=/opt/data/.playwright/browsers PYTHONPATH=/opt/data/.pip-packages python3 -m playwright install chromium 2>&1 | tail -1\n  touch /opt/data/.playwright/.installed\nfi\n\n# ddgs\nif ! PYTHONPATH=/opt/data/.pip-packages python3 -c \"import ddgs\" 2>/dev/null; then\n  uv pip install --python /opt/hermes/.venv/bin/python --target /opt/data/.pip-packages ddgs 2>&1 | tail -1\nfi\n\n# GitHub repo\nif [ ! -d \"$REPO_DIR/.git\" ]; then\n  rm -rf \"$REPO_DIR\" 2>/dev/null\n  git clone https://jhonalca223-openclaw:${GITHUB_PAT}@github.com/jhonalca223-openclaw/hermes.git \"$REPO_DIR\" 2>&1 | tail -1\nelse\n  cd \"$REPO_DIR\" && git pull 2>&1 | tail -1\nfi\n\n# Git config\nprintf '%%s\\n' '[user]' '  name = Hermes Agent' '  email = hermes@openclaw.local' '[safe]' '  directory = /opt/data/workspace/hermes-repo' '[credential]' '  helper = store --file /opt/data/.git-credentials' > /opt/data/.gitconfig\nchmod 644 /opt/data/.gitconfig\necho \"https://jhonalca223-openclaw:${GITHUB_PAT}@github.com\" > /opt/data/.git-credentials\nchmod 600 /opt/data/.git-credentials\n\n# Kubeconfig generator script (persistente en PVC)\nif [ ! -f /opt/data/bin/generate-kubeconfig.sh ]; then\n  cat > /opt/data/bin/generate-kubeconfig.sh << 'EOF'\n#!/bin/sh\nset -e\nS=\"https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}\"\ncat > /opt/data/.kube/config << KEND\napiVersion: v1\nkind: Config\ncurrent-context: hermes\nclusters:\n- cluster:\n    certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n    server: ${S}\n  name: hermes-cluster\ncontexts:\n- context:\n    cluster: hermes-cluster\n    namespace: hermes\n    user: hermes-sa\n  name: hermes\nusers:\n- name: hermes-sa\n  user:\n    exec:\n      apiVersion: client.authentication.k8s.io/v1beta1\n      command: sh\n      args:\n      - -c\n      - token=\\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) && printf '{\"apiVersion\":\"client.authentication.k8s.io/v1beta1\",\"kind\":\"ExecCredential\",\"status\":{\"token\":\"%s\"}}' \"\\$token\"\nKEND\nchmod 600 /opt/data/.kube/config\nEOF\n  chmod +x /opt/data/bin/generate-kubeconfig.sh\nfi\n/opt/data/bin/generate-kubeconfig.sh\n\nchown -R ${HERMES_UID}:${HERMES_UID} /opt/data"
-            ],
-            "env": [
-              {
-                "name": "GITHUB_PAT",
-                "valueFrom": {
-                  "secretKeyRef": {
-                    "name": "hermes-github",
-                    "key": "GITHUB_PAT",
-                    "optional": false
-                  }
-                }
-              }
-            ],
-            "volumeMounts": [
-              {
-                "name": "hermes-data",
-                "mountPath": "/opt/data"
-              }
-            ]
-          }
-        ],
-        "containers": [
-          {
-            "name": "hermes",
-            "image": "nousresearch/hermes-agent:v2026.5.29.2",
-            "imagePullPolicy": "IfNotPresent",
-            "args": [
-              "gateway"
-            ],
-            "env": [
-              {
-                "name": "OPENAI_API_KEY",
-                "valueFrom": {
-                  "secretKeyRef": {
-                    "name": "hermes-secrets",
-                    "key": "OPENAI_API_KEY",
-                    "optional": false
-                  }
-                }
-              },
-              {
-                "name": "DEEPSEEK_API_KEY",
-                "valueFrom": {
-                  "secretKeyRef": {
-                    "name": "hermes-secrets",
-                    "key": "DEEPSEEK_API_KEY",
-                    "optional": false
-                  }
-                }
-              },
-              {
-                "name": "TELEGRAM_BOT_TOKEN",
-                "valueFrom": {
-                  "secretKeyRef": {
-                    "name": "hermes-secrets",
-                    "key": "TELEGRAM_BOT_TOKEN",
-                    "optional": true
-                  }
-                }
-              },
-              {
-                "name": "TELEGRAM_ALLOW_ALL_USERS",
-                "valueFrom": {
-                  "secretKeyRef": {
-                    "name": "hermes-secrets",
-                    "key": "TELEGRAM_ALLOW_ALL_USERS",
-                    "optional": true
-                  }
-                }
-              },
-              {
-                "name": "HERMES_DASHBOARD",
-                "value": "true"
-              },
-              {
-                "name": "HERMES_DASHBOARD_HOST",
-                "value": "0.0.0.0"
-              },
-              {
-                "name": "HERMES_DASHBOARD_PORT",
-                "value": "9119"
-              },
-              {
-                "name": "HERMES_DASHBOARD_INSECURE",
-                "value": "true"
-              },
-              {
-                "name": "GITHUB_PAT",
-                "valueFrom": {
-                  "secretKeyRef": {
-                    "name": "hermes-github",
-                    "key": "GITHUB_PAT",
-                    "optional": false
-                  }
-                }
-              },
-              {
-                "name": "GIT_CONFIG_GLOBAL",
-                "value": "/opt/data/.gitconfig"
-              },
-              {
-                "name": "KUBECONFIG",
-                "value": "/opt/data/.kube/config"
-              },
-              {
-                "name": "PYTHONPATH",
-                "value": "/opt/data/.pip-packages"
-              },
-              {
-                "name": "PLAYWRIGHT_BROWSERS_PATH",
-                "value": "/opt/data/.playwright/browsers"
-              },
-              {
-                "name": "PATH",
-                "value": "/opt/data/bin:/opt/hermes/.venv/bin:/usr/local/bin:/usr/bin:/bin"
-              },
-              {
-                "name": "HERMES_API_TIMEOUT",
-                "value": "1800"
-              }
-            ],
-            "envFrom": [
-              {
-                "secretRef": {
-                  "name": "hermes-secrets",
-                  "optional": true
-                }
-              }
-            ],
-            "volumeMounts": [
-              {
-                "name": "hermes-config",
-                "mountPath": "/opt/data/config.yaml",
-                "subPath": "config.yaml",
-                "readOnly": true
-              },
-              {
-                "name": "hermes-config",
-                "mountPath": "/opt/data/SOUL.md",
-                "subPath": "SOUL.md",
-                "readOnly": true
-              },
-              {
-                "name": "hermes-data",
-                "mountPath": "/opt/data"
-              }
-            ],
-            "resources": {
-              "requests": {
-                "cpu": "500m",
-                "memory": "1Gi"
-              },
-              "limits": {
-                "cpu": "2",
-                "memory": "2Gi"
-              }
-            },
-            "livenessProbe": {
-              "exec": {
-                "command": [
-                  "hermes",
-                  "config"
-                ]
-              },
-              "initialDelaySeconds": 30,
-              "periodSeconds": 60,
-              "timeoutSeconds": 10
-            },
-            "startupProbe": {
-              "exec": {
-                "command": [
-                  "sh",
-                  "-c",
-                  "test -f /opt/data/config.yaml && test -d /opt/data/workspace"
-                ]
-              },
-              "initialDelaySeconds": 5,
-              "periodSeconds": 10,
-              "failureThreshold": 30
-            }
-          }
-        ],
-        "volumes": [
-          {
-            "name": "hermes-config",
-            "configMap": {
-              "name": "hermes-config",
-              "defaultMode": 292
-            }
-          },
-          {
-            "name": "hermes-data",
-            "persistentVolumeClaim": {
-              "claimName": "hermes-data"
-            }
-          }
-        ]
-      }
-    }
-  }
-}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes-agent
+  namespace: hermes
+  labels:
+    app.kubernetes.io/name: hermes-agent
+    app.kubernetes.io/part-of: hermes
+    app.kubernetes.io/component: gateway
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hermes-agent
+      app.kubernetes.io/component: gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hermes-agent
+        app.kubernetes.io/component: gateway
+        app.kubernetes.io/part-of: hermes
+    spec:
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: init-workspace
+          image: nousresearch/hermes-agent:v2026.5.29.2
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c"]
+          args:
+            - |
+              HERMES_UID=$(id -u hermes 2>/dev/null || echo 10000)
+              REPO_DIR="/opt/data/workspace/hermes-repo"
+              
+              # ── Directorios base ──────────────────────────────
+              mkdir -p /opt/data/workspace \
+                /opt/data/memories \
+                /opt/data/skills \
+                /opt/data/cron \
+                /opt/data/sessions \
+                /opt/data/logs \
+                /opt/data/.pip-packages \
+                /opt/data/.playwright/browsers
+              chmod 755 /opt/data/workspace
+
+              # ── kubectl (si no está instalado) ────────────────────
+              if [ ! -f /opt/data/bin/kubectl ]; then
+                echo "[init] Descargando kubectl para ARM64..."
+                KUBECTL_VERSION=$(curl -sL https://dl.k8s.io/release/stable.txt)
+                curl -sLO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/arm64/kubectl"
+                chmod +x kubectl
+                mv kubectl /opt/data/bin/kubectl
+                echo "[init] kubectl ${KUBECTL_VERSION} instalado en PVC"
+              else
+                echo "[init] kubectl ya instalado en PVC"
+              fi
+
+              # ── Playwright (si no está instalado) ─────────────
+              if [ ! -f /opt/data/.playwright/.installed ]; then
+                echo "[init] Instalando Playwright en PVC..."
+                uv pip install --python /opt/hermes/.venv/bin/python \
+                  --target /opt/data/.pip-packages playwright 2>&1 | tail -3
+                PLAYWRIGHT_BROWSERS_PATH=/opt/data/.playwright/browsers \
+                  PYTHONPATH=/opt/data/.pip-packages \
+                  python3 -m playwright install chromium 2>&1 | tail -3
+                if [ $? -eq 0 ]; then
+                  touch /opt/data/.playwright/.installed
+                  echo "[init] Playwright instalado correctamente"
+                fi
+              else
+                echo "[init] Playwright ya instalado en PVC"
+              fi
+
+              # ── DuckDuckGo Search (web_search tool) ─────────────
+              if ! PYTHONPATH=/opt/data/.pip-packages python3 -c "import ddgs" 2>/dev/null; then
+                echo "[init] Instalando ddgs (DuckDuckGo Search)..."
+                uv pip install --python /opt/hermes/.venv/bin/python \
+                  --target /opt/data/.pip-packages ddgs 2>&1 | tail -3
+                if [ $? -eq 0 ]; then
+                  echo "[init] ddgs instalado correctamente"
+                fi
+              else
+                echo "[init] ddgs ya instalado en PVC"
+              fi
+
+              # ── GitHub: clonar repo si no existe ──────────────
+              if [ ! -d "$REPO_DIR/.git" ]; then
+                echo "[init] Clonando repositorio Hermes..."
+                rm -rf "$REPO_DIR" 2>/dev/null
+                git clone \
+                  https://jhonalca223-openclaw:${GITHUB_PAT}@github.com/jhonalca223-openclaw/hermes.git \
+                  "$REPO_DIR" 2>&1
+                if [ $? -eq 0 ]; then
+                  echo "[init] Repo clonado correctamente"
+                fi
+              else
+                echo "[init] Repo ya clonado, haciendo pull..."
+                cd "$REPO_DIR" && git pull 2>&1 | tail -3
+              fi
+
+              # ── Git config global en PVC (persistente entre reinicios) ──
+              printf '%s\n' \
+                '[user]' \
+                '  name = Hermes Agent' \
+                '  email = hermes@openclaw.local' \
+                '[safe]' \
+                '  directory = /opt/data/workspace/hermes-repo' \
+                '[credential]' \
+                '  helper = store --file /opt/data/.git-credentials' \
+                > /opt/data/.gitconfig
+              chmod 644 /opt/data/.gitconfig
+              # Credential helper con PAT en el PVC
+              echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
+              chmod 600 /opt/data/.git-credentials
+
+              # ── Chown final ───────────────────────────────────
+              chown -R ${HERMES_UID}:${HERMES_UID} /opt/data
+          env:
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-github
+                  key: GITHUB_PAT
+                  optional: false
+          volumeMounts:
+            - name: hermes-data
+              mountPath: /opt/data
+      containers:
+        - name: hermes
+          image: nousresearch/hermes-agent:v2026.5.29.2
+          imagePullPolicy: IfNotPresent
+          args: ["gateway"]
+          env:
+            # ── Model Provider (DeepSeek) ────────────────────────
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: OPENAI_API_KEY
+                  optional: false
+            - name: DEEPSEEK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: DEEPSEEK_API_KEY
+                  optional: false
+            # ── Telegram Bot ─────────────────────────────────────
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: TELEGRAM_BOT_TOKEN
+                  optional: true
+            - name: TELEGRAM_ALLOW_ALL_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: TELEGRAM_ALLOW_ALL_USERS
+                  optional: true
+            # ── Dashboard Web ───────────────────────────────
+            - name: HERMES_DASHBOARD
+              value: "true"
+            - name: HERMES_DASHBOARD_HOST
+              value: "0.0.0.0"
+            - name: HERMES_DASHBOARD_PORT
+              value: "9119"
+            - name: HERMES_DASHBOARD_INSECURE
+              value: "true"
+            # ── GitHub (autogestión de repo) ───────────────────────
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-github
+                  key: GITHUB_PAT
+                  optional: false
+            - name: GIT_CONFIG_GLOBAL
+              value: /opt/data/.gitconfig
+
+            # ── Playwright (GUI Testing) ────────────────────────────
+            - name: PYTHONPATH
+              value: /opt/data/.pip-packages
+            - name: PLAYWRIGHT_BROWSERS_PATH
+              value: /opt/data/.playwright/browsers
+            # ── PATH extendido (kubectl, chromium, tirith, etc.) ───
+            - name: PATH
+              value: "/opt/data/bin:/opt/hermes/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+            # ── Opcionales ───────────────────────────────────────
+            - name: HERMES_API_TIMEOUT
+              value: "1800"
+          envFrom:
+            - secretRef:
+                name: hermes-secrets
+                optional: true
+          volumeMounts:
+            # Configuración principal (read-only desde ConfigMap)
+            - name: hermes-config
+              mountPath: /opt/data/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            # SOUL.md — Personalidad del agente
+            - name: hermes-config
+              mountPath: /opt/data/SOUL.md
+              subPath: SOUL.md
+              readOnly: true
+            # Datos persistentes (memorias, sesiones, skills, .env, workspace)
+            - name: hermes-data
+              mountPath: /opt/data
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          livenessProbe:
+            exec:
+              command:
+                - hermes
+                - config
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 10
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "test -f /opt/data/config.yaml && test -d /opt/data/workspace"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 30
+      volumes:
+        - name: hermes-config
+          configMap:
+            name: hermes-config
+            defaultMode: 0444
+        - name: hermes-data
+          persistentVolumeClaim:
+            claimName: hermes-data
