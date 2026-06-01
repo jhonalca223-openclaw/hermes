@@ -44,6 +44,18 @@ spec:
                 /opt/data/.playwright/browsers
               chmod 755 /opt/data/workspace
 
+              # ── kubectl (si no está instalado) ────────────────────
+              if [ ! -f /opt/data/bin/kubectl ]; then
+                echo "[init] Descargando kubectl para ARM64..."
+                KUBECTL_VERSION=$(curl -sL https://dl.k8s.io/release/stable.txt)
+                curl -sLO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/arm64/kubectl"
+                chmod +x kubectl
+                mv kubectl /opt/data/bin/kubectl
+                echo "[init] kubectl ${KUBECTL_VERSION} instalado en PVC"
+              else
+                echo "[init] kubectl ya instalado en PVC"
+              fi
+
               # ── Playwright (si no está instalado) ─────────────
               if [ ! -f /opt/data/.playwright/.installed ]; then
                 echo "[init] Instalando Playwright en PVC..."
@@ -58,6 +70,18 @@ spec:
                 fi
               else
                 echo "[init] Playwright ya instalado en PVC"
+              fi
+
+              # ── DuckDuckGo Search (web_search tool) ─────────────
+              if ! PYTHONPATH=/opt/data/.pip-packages python3 -c "import ddgs" 2>/dev/null; then
+                echo "[init] Instalando ddgs (DuckDuckGo Search)..."
+                uv pip install --python /opt/hermes/.venv/bin/python \
+                  --target /opt/data/.pip-packages ddgs 2>&1 | tail -3
+                if [ $? -eq 0 ]; then
+                  echo "[init] ddgs instalado correctamente"
+                fi
+              else
+                echo "[init] ddgs ya instalado en PVC"
               fi
 
               # ── GitHub: clonar repo si no existe ──────────────
@@ -158,6 +182,9 @@ spec:
               value: /opt/data/.pip-packages
             - name: PLAYWRIGHT_BROWSERS_PATH
               value: /opt/data/.playwright/browsers
+            # ── PATH extendido (kubectl, chromium, tirith, etc.) ───
+            - name: PATH
+              value: "/opt/data/bin:/usr/local/bin:/usr/bin:/bin"
             # ── Opcionales ───────────────────────────────────────
             - name: HERMES_API_TIMEOUT
               value: "1800"

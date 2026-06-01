@@ -50,8 +50,12 @@ data:
       lifetime_seconds: 300
 
     # =============================================================================
-    # Tools habilitados
+    # Web Search — DuckDuckGo (sin API key)
     # =============================================================================
+    web:
+      backend: ddgs
+      search_backend: ddgs
+
     tools:
       # Tools básicas habilitadas por defecto
       web_search: true
