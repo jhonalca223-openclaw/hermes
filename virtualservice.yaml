@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: hermes-vs
+  namespace: hermes
+  labels:
+    app.kubernetes.io/name: hermes-agent
+    app.kubernetes.io/part-of: hermes
+spec:
+  hosts:
+    - hermes.kdvops.com
+  gateways:
+    - istio-system/kdvops-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: hermes-dashboard
+            port:
+              number: 9119

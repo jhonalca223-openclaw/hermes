@@ -71,6 +71,15 @@ spec:
                   name: hermes-secrets
                   key: TELEGRAM_ALLOW_ALL_USERS
                   optional: true
+            # ── Dashboard Web ───────────────────────────────
+            - name: HERMES_DASHBOARD
+              value: "true"
+            - name: HERMES_DASHBOARD_HOST
+              value: "0.0.0.0"
+            - name: HERMES_DASHBOARD_PORT
+              value: "9119"
+            - name: HERMES_DASHBOARD_INSECURE
+              value: "true"
             # ── Opcionales ───────────────────────────────────────
             - name: HERMES_API_TIMEOUT
               value: "1800"

@@ -8,6 +8,8 @@ resources:
   - configmap.yaml
   - pvc.yaml
   - deployment.yaml
+  - service.yaml
+  - virtualservice.yaml
 
 # Secret no incluido por defecto — aplicar manualmente o via External Secrets
 # - secret.yaml
