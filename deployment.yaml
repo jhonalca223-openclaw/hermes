@@ -30,6 +30,9 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
+              # Crear directorios con el mismo UID que hermes (10000)
+              # para evitar que el stage2-hook haga chown -R sobre node_modules
+              HERMES_UID=$(id -u hermes 2>/dev/null || echo 10000)
               mkdir -p /opt/data/workspace \
                 /opt/data/memories \
                 /opt/data/skills \
@@ -37,6 +40,8 @@ spec:
                 /opt/data/sessions \
                 /opt/data/logs
               chmod 755 /opt/data/workspace
+              # Chownear el PVC al UID de hermes para evitar chown masivo
+              chown -R ${HERMES_UID}:${HERMES_UID} /opt/data
           volumeMounts:
             - name: hermes-data
               mountPath: /opt/data
