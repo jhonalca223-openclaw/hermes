@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes-agent
+  namespace: hermes
+  labels:
+    app.kubernetes.io/name: hermes-agent
+    app.kubernetes.io/part-of: hermes
+    app.kubernetes.io/component: gateway
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hermes-agent
+      app.kubernetes.io/component: gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hermes-agent
+        app.kubernetes.io/component: gateway
+        app.kubernetes.io/part-of: hermes
+    spec:
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: init-workspace
+          image: nousresearch/hermes-agent:latest
+          imagePullPolicy: Always
+          command: ["sh", "-c"]
+          args:
+            - |
+              mkdir -p /opt/data/workspace \
+                /opt/data/memories \
+                /opt/data/skills \
+                /opt/data/cron \
+                /opt/data/sessions \
+                /opt/data/logs
+              chmod 755 /opt/data/workspace
+          volumeMounts:
+            - name: hermes-data
+              mountPath: /opt/data
+      containers:
+        - name: hermes
+          image: nousresearch/hermes-agent:latest
+          imagePullPolicy: Always
+          args: ["gateway", "start"]
+          env:
+            # ── Model Provider (DeepSeek) ────────────────────────
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: OPENAI_API_KEY
+                  optional: false
+            # ── Telegram Bot ─────────────────────────────────────
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: TELEGRAM_BOT_TOKEN
+                  optional: true
+            - name: TELEGRAM_ALLOW_ALL_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: TELEGRAM_ALLOW_ALL_USERS
+                  optional: true
+            # ── Opcionales ───────────────────────────────────────
+            - name: HERMES_API_TIMEOUT
+              value: "1800"
+          envFrom:
+            - secretRef:
+                name: hermes-secrets
+                optional: true
+          volumeMounts:
+            # Configuración principal (read-only desde ConfigMap)
+            - name: hermes-config
+              mountPath: /opt/data/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            # SOUL.md — Personalidad del agente
+            - name: hermes-config
+              mountPath: /opt/data/SOUL.md
+              subPath: SOUL.md
+              readOnly: true
+            # Datos persistentes (memorias, sesiones, skills, .env, workspace)
+            - name: hermes-data
+              mountPath: /opt/data
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          livenessProbe:
+            exec:
+              command:
+                - hermes
+                - config
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 10
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "test -f /opt/data/config.yaml && test -d /opt/data/workspace"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 30
+      volumes:
+        - name: hermes-config
+          configMap:
+            name: hermes-config
+            defaultMode: 0444
+        - name: hermes-data
+          persistentVolumeClaim:
+            claimName: hermes-data

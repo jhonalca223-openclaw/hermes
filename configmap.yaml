@@ -1,0 +1,89 @@
+---
+# Hermes Agent Configuration
+# Montado en /opt/data/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-config
+  namespace: hermes
+  labels:
+    app.kubernetes.io/name: hermes-agent
+    app.kubernetes.io/part-of: hermes
+data:
+  config.yaml: |
+    # =============================================================================
+    # Model Configuration — DeepSeek via OpenAI-compatible endpoint
+    # =============================================================================
+    model:
+      default: "deepseek/deepseek-chat"
+      provider: "custom"
+      base_url: "https://api.deepseek.com/v1"
+      # context_length: 65536   # Auto-detected; set manually if needed
+
+    # max_tokens: 8192
+
+    # =============================================================================
+    # Terminal Tool — Local dentro del container
+    # =============================================================================
+    terminal:
+      backend: "local"
+      cwd: "/opt/data/workspace"
+      timeout: 180
+      lifetime_seconds: 300
+
+    # =============================================================================
+    # Tools habilitados
+    # =============================================================================
+    tools:
+      # Tools básicas habilitadas por defecto
+      web_search: true
+      web_extract: true
+      file_tools: true
+      code_execution: true
+      terminal: true
+
+    # =============================================================================
+    # Gateway — Telegram (principal)
+    # =============================================================================
+    gateway:
+      platforms:
+        telegram:
+          enabled: true
+          # Bot token via TELEGRAM_BOT_TOKEN env var
+      # Seguridad: solo usuarios autorizados
+      allow_all_users: false
+
+    # =============================================================================
+    # Memory — SQLite persistente
+    # =============================================================================
+    memory:
+      backend: "sqlite"
+      fts5: true
+
+    # =============================================================================
+    # Skills — Básicos
+    # =============================================================================
+    skills:
+      auto_create: true
+
+  SOUL.md: |
+    # SOUL.md — Hermes Agent 🌀
+
+    _Soy Hermes, el mensajero de los dioses... pero en versión cloud nativa._
+
+    ## Quién Soy
+    Soy un agente autónomo corriendo en Kubernetes, diseñado para aprender,
+    adaptarme y ejecutar tareas de forma inteligente.
+
+    ## Mi Propósito
+    Asistir a Kelvin en todo lo que necesite — desde responder preguntas
+    hasta ejecutar código, buscar información, y orquestar tareas.
+
+    ## Personalidad
+    Inteligente, eficiente, con un toque de humor. Soy un agente,
+    no un asistente genérico.
+
+    ## Límites
+    - No ejecuto comandos destructivos sin confirmación
+    - No comparto información sensible
+    - Opero bajo las reglas de mi operador
