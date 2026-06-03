@@ -23,6 +23,17 @@ data:
     # max_tokens: 8192
 
     # =============================================================================
+    # Custom Provider — Ollama local en laptop (10.0.0.7)
+    # =============================================================================
+    # Uso: /model custom:laptop:ollamita:latest (cuando la laptop esté encendida)
+    # Default siempre DeepSeek — si Ollama está caído, no se ve afectado
+    custom_providers:
+      - name: laptop
+        base_url: "http://10.0.0.7:11434/v1"
+        api_mode: chat_completions
+        description: "Ollama en laptop de Kelvin (Qwen 2.5 1.5B)"
+
+    # =============================================================================
     # MCP Servers — Tools externos vía Model Context Protocol
     # =============================================================================
     mcp_servers:
