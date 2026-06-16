@@ -51,6 +51,22 @@ data:
         enabled: true
         description: "Interactúa con clústeres K8s via kubectl"
 
+      # ── Jira — Issues, proyectos y sprints ─────────────────────────
+      jira:
+        command: "uvx"
+        args: ["mcp-atlassian"]
+        enabled: true
+        description: "Gestiona issues, sprints y proyectos de Jira"
+        # Env vars: JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN vía hermes-secrets
+
+      # ── Azure DevOps — Work items, repos, builds, wikis ───────────
+      azure-devops:
+        command: "npx"
+        args: ["-y", "@azure-devops/mcp", "the-punisher01", "--authentication", "pat"]
+        enabled: true
+        description: "Gestiona work items, repos, builds y wikis de Azure DevOps"
+        # Env var: PERSONAL_ACCESS_TOKEN vía hermes-secrets
+
     # =============================================================================
     # Terminal Tool — Local dentro del container
     # =============================================================================
