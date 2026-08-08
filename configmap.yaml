@@ -12,13 +12,13 @@ metadata:
 data:
   config.yaml: |
     # =============================================================================
-    # Model Configuration — DeepSeek via OpenAI-compatible endpoint
+    # Model Configuration — OpenAI Codex (ChatGPT OAuth)
     # =============================================================================
     model:
-      default: "deepseek-v4-flash"
-      provider: "custom"
-      base_url: "https://api.deepseek.com/v1"
-      # context_length: 65536   # Auto-detected; set manually if needed
+      default: "gpt-5.3-codex"
+      provider: "openai-codex"
+      # base_url: auto (chatgpt.com/backend-api/codex via credencial OAuth en auth.json)
+      # context_length: 272000   # Auto-detected; set manually if needed
 
     # max_tokens: 8192
 
@@ -26,7 +26,7 @@ data:
     # Custom Provider — Ollama local en laptop (10.0.0.7)
     # =============================================================================
     # Uso: /model custom:laptop:ollamita:latest (cuando la laptop esté encendida)
-    # Default siempre DeepSeek — si Ollama está caído, no se ve afectado
+    # Default siempre Codex — si Ollama está caído, no se ve afectado
     custom_providers:
       - name: laptop
         base_url: "http://10.0.0.7:11434/v1"
