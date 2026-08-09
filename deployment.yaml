@@ -99,6 +99,17 @@ spec:
                 cd "$REPO_DIR" && git pull 2>&1 | tail -3
               fi
 
+              # ── Skills: restaurar desde GitOps al PVC ─────────────
+              if [ -d "$REPO_DIR/skills" ]; then
+                echo "[init] Sincronizando skills del repo al PVC..."
+                mkdir -p /opt/data/skills
+                cp -a "$REPO_DIR/skills/." /opt/data/skills/
+                chown -R ${HERMES_UID}:${HERMES_UID} /opt/data/skills
+                echo "[init] Skills restauradas desde GitOps"
+              else
+                echo "[init] No se encontró carpeta skills en el repo"
+              fi
+
               # ── Git config global en PVC (persistente entre reinicios) ──
               printf '%s\n' \
                 '[user]' \
