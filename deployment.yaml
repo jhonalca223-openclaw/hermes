@@ -84,6 +84,21 @@ spec:
                 echo "[init] ddgs ya instalado en PVC"
               fi
 
+              # ── Git config global en PVC antes del clone/pull ──────
+              export GIT_CONFIG_GLOBAL=/opt/data/.gitconfig
+              printf '%s\n' \
+                '[user]' \
+                '  name = Hermes Agent' \
+                '  email = hermes@openclaw.local' \
+                '[safe]' \
+                '  directory = /opt/data/workspace/hermes-repo' \
+                '[credential]' \
+                '  helper = store --file /opt/data/.git-credentials' \
+                > /opt/data/.gitconfig
+              chmod 644 /opt/data/.gitconfig
+              echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
+              chmod 600 /opt/data/.git-credentials
+
               # ── GitHub: clonar repo si no existe ──────────────
               if [ ! -d "$REPO_DIR/.git" ]; then
                 echo "[init] Clonando repositorio Hermes..."
@@ -98,21 +113,6 @@ spec:
                 echo "[init] Repo ya clonado, haciendo pull..."
                 cd "$REPO_DIR" && git pull 2>&1 | tail -3
               fi
-
-              # ── Git config global en PVC (persistente entre reinicios) ──
-              printf '%s\n' \
-                '[user]' \
-                '  name = Hermes Agent' \
-                '  email = hermes@openclaw.local' \
-                '[safe]' \
-                '  directory = /opt/data/workspace/hermes-repo' \
-                '[credential]' \
-                '  helper = store --file /opt/data/.git-credentials' \
-                > /opt/data/.gitconfig
-              chmod 644 /opt/data/.gitconfig
-              # Credential helper con PAT en el PVC
-              echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
-              chmod 600 /opt/data/.git-credentials
 
               # ── Chown final ───────────────────────────────────
               chown -R ${HERMES_UID}:${HERMES_UID} /opt/data
