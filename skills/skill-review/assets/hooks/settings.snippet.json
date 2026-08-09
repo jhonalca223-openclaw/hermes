@@ -1,0 +1,16 @@
+{
+  "_comment": "OPTIONAL belt-and-suspenders reminder. Merge the 'hooks' block into your Claude Code settings.json (e.g. ~/.claude/settings.json) to be reminded to run skill-review before a skill is copied into a skills directory. This is harness config, NOT part of the skill. Replace <ABS_PATH> with the absolute path to skill_install_guard.py. Verify the PreToolUse payload shape for your Claude Code version. To make it BLOCK instead of remind, set env BLOCK=1 for the command. The update-config skill can apply this for you.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"<ABS_PATH>/assets/hooks/skill_install_guard.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

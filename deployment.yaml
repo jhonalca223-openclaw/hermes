@@ -158,6 +158,12 @@ spec:
                   name: hermes-secrets
                   key: TELEGRAM_ALLOW_ALL_USERS
                   optional: true
+            - name: TELEGRAM_ALLOWED_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-secrets
+                  key: TELEGRAM_ALLOWED_USERS
+                  optional: true
             # ── Dashboard Web ───────────────────────────────
             - name: HERMES_DASHBOARD
               value: "true"
