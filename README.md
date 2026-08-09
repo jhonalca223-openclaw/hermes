@@ -93,6 +93,20 @@ La configuración principal está en `configmap.yaml`:
 - **Tools:** web_search, web_extract, file_tools, code_execution, terminal
 - **Gateway:** Telegram
 
+### Dashboard web
+
+El dashboard público de Hermes ahora usa auth básica cuando se expone en
+`0.0.0.0`.
+
+- `HERMES_DASHBOARD_BASIC_AUTH_USERNAME`
+- `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH`
+- `HERMES_DASHBOARD_BASIC_AUTH_SECRET`
+
+Esos valores se inyectan desde el `SealedSecret` `hermes-secrets`, así que
+quedan gestionados por GitOps sin dejar secretos en claro en el repo.
+La vía OAuth/OIDC sigue existiendo como alternativa, pero no es necesaria
+para este despliegue.
+
 Para agregar más plataformas: editar `configmap.yaml` > `gateway.platforms` y agregar las credenciales en el Secret.
 
 ## 📦 Actualización
