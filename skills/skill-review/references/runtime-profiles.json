@@ -1,0 +1,75 @@
+{
+  "_comment": "Read by discover_skills.py and the orchestrator. Two purposes: (1) skill_roots tell WHERE each runtime installs skills, for cross-runtime discovery; (2) subagent_support + work_dir describe a runtime WHEN IT IS THE HOST running skill-review (drives isolation mode and the skill's own work directory). Paths use ~ (expanded via Path.home()) and may contain glob segments. needs_verification=true means the path is a best guess to confirm at build/run time.",
+  "schema_version": 1,
+  "profiles": [
+    {
+      "name": "claude-code",
+      "detect": {"env": ["CLAUDE_CODE", "CLAUDECODE"], "paths": ["~/.claude"]},
+      "skill_roots": [
+        {"path": "~/.claude/skills", "kind": "flat", "needs_verification": false},
+        {"path": "~/.agents/skills", "kind": "flat", "needs_verification": false},
+        {"path": "~/.claude/plugins/marketplaces/*/*/skills", "kind": "glob", "needs_verification": false},
+        {"path": "~/.claude/plugins/repos/*/skills", "kind": "glob", "needs_verification": true}
+      ],
+      "skill_format": "SKILL.md",
+      "subagent_support": true,
+      "work_dir": "~/.claude/skill-review",
+      "install_cmd_hint": "copy the audited folder into ~/.claude/skills/<name>/ (or npx skills add)"
+    },
+    {
+      "name": "openclaw",
+      "detect": {"env": ["OPENCLAW_HOME"], "paths": ["~/.agents/skills", "./.agents/skills"]},
+      "skill_roots": [
+        {"path": "~/.agents/skills", "kind": "flat", "needs_verification": false},
+        {"path": "./.agents/skills", "kind": "flat", "needs_verification": false},
+        {"path": "./skills", "kind": "flat", "needs_verification": false},
+        {"path": "./extensions/*/skills", "kind": "glob", "needs_verification": false}
+      ],
+      "skill_format": "SKILL.md",
+      "subagent_support": "unknown",
+      "work_dir": "~/.agents/skill-review",
+      "install_cmd_hint": "place the audited folder under the relevant skills/ or extensions/<ext>/skills/ root"
+    },
+    {
+      "name": "codex",
+      "detect": {"env": ["CODEX_HOME"], "paths": ["~/.codex"]},
+      "skill_roots": [
+        {"path": "./.codex/skills", "kind": "flat", "needs_verification": false},
+        {"path": "~/.codex/skills", "kind": "flat", "needs_verification": false},
+        {"path": "~/.codex/plugins/*/skills", "kind": "glob", "needs_verification": true},
+        {"path": "~/.claude/plugins/marketplaces/openai-codex-plugin-cc/*/skills", "kind": "glob", "needs_verification": true}
+      ],
+      "skill_format": "SKILL.md",
+      "subagent_support": "unknown",
+      "work_dir": "~/.codex/skill-review",
+      "install_cmd_hint": "Codex skills live under .codex/skills/ (workspace) or ~/.codex/skills (home)"
+    },
+    {
+      "name": "hermes",
+      "detect": {"env": ["HERMES_HOME"], "paths": ["~/.hermes", "~/.hermes-test1"]},
+      "skill_roots": [
+        {"path": "~/.hermes/skills", "kind": "flat", "needs_verification": false},
+        {"path": "~/.hermes-*/skills", "kind": "glob", "needs_verification": false}
+      ],
+      "skill_format": "SKILL.md",
+      "subagent_support": "unknown",
+      "work_dir": "~/.hermes/skill-review",
+      "_note": "Hermes home is $HERMES_HOME (default ~/.hermes; eval/test homes ~/.hermes-testN). Per-profile session-generated skills live in $HERMES_HOME/skills (wiped on reset). Hermes reads the same SKILL.md, plus an optional metadata.hermes block (tags/related_skills). The built-in (install-dir) skill root differs per Hermes build and is not auto-discovered - pass --root for it. If $HERMES_HOME is set to a non-default path, pass --root $HERMES_HOME/skills.",
+      "install_cmd_hint": "place under $HERMES_HOME/skills (default ~/.hermes/skills); built-in skills live in the Hermes install dir"
+    },
+    {
+      "name": "generic",
+      "detect": {"env": [], "paths": []},
+      "skill_roots": [],
+      "skill_format": "SKILL.md",
+      "subagent_support": "unknown",
+      "work_dir": "~/.skill-review",
+      "install_cmd_hint": "pass --root <dir> for each skills directory this runtime uses"
+    }
+  ],
+  "auto_probe_patterns": [
+    "*/skills",
+    "*/.agents/skills",
+    "*/extensions/*/skills"
+  ]
+}

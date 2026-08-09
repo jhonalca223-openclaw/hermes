@@ -1,0 +1,24 @@
+{
+  "skill_name": "skill-review",
+  "_comment": "Trigger boundary set for description tuning. should_trigger=true must invoke skill-review; false must defer to the named skill. Use with skill-creator's description optimizer; the false cases are the load-bearing negatives that keep this skill from stealing code-review / security-review / verify / skill-creator triggers.",
+  "evals": [
+    {"id": 1,  "should_trigger": true,  "prompt": "Should I install this skill folder I just downloaded?", "note": "pre-install gate"},
+    {"id": 2,  "should_trigger": true,  "prompt": "这个 skill 安全吗？", "note": "on-demand audit, zh"},
+    {"id": 3,  "should_trigger": true,  "prompt": "审查一下这个技能再装", "note": "pre-install gate, zh"},
+    {"id": 4,  "should_trigger": true,  "prompt": "扫描我已安装的所有 skill 有没有风险", "note": "installed-audit, zh"},
+    {"id": 5,  "should_trigger": true,  "prompt": "audit this skill before I add it to ~/.claude/skills", "note": "pre-install gate"},
+    {"id": 6,  "should_trigger": true,  "prompt": "check my installed skills for anything malicious", "note": "installed-audit"},
+    {"id": 7,  "should_trigger": true,  "prompt": "is it safe to give my agent this skill.zip someone sent me?", "note": "pre-install gate, zip"},
+    {"id": 8,  "should_trigger": true,  "prompt": "这个 skill 会不会偷偷把我的文件传到云端？", "note": "exfil concern, zh"},
+    {"id": 9,  "should_trigger": true,  "prompt": "does this skill have prompt injection in it?", "note": "injection concern"},
+
+    {"id": 20, "should_trigger": false, "prompt": "review this PR for bugs", "note": "-> code-review"},
+    {"id": 21, "should_trigger": false, "prompt": "审查一下这段代码有没有 bug", "note": "-> code-review, zh"},
+    {"id": 22, "should_trigger": false, "prompt": "do a security review of my repo", "note": "-> security-review"},
+    {"id": 23, "should_trigger": false, "prompt": "verify my change actually works", "note": "-> verify"},
+    {"id": 24, "should_trigger": false, "prompt": "help me create a skill that audits other skills", "note": "-> skill-creator (authoring)"},
+    {"id": 25, "should_trigger": false, "prompt": "帮我写一个审查技能的 skill", "note": "-> skill-creator (authoring), zh"},
+    {"id": 26, "should_trigger": false, "prompt": "optimize this skill's description so it triggers better", "note": "-> skill-creator"},
+    {"id": 27, "should_trigger": false, "prompt": "scan my codebase for SQL injection vulnerabilities", "note": "-> security-review (app code, not a skill)"}
+  ]
+}
