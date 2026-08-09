@@ -25,7 +25,7 @@ spec:
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-workspace
-          image: nousresearch/hermes-agent:v2026.5.29.2
+          image: nousresearch/hermes-agent:v2026.8.3
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
@@ -57,20 +57,20 @@ spec:
               fi
 
               # ── Playwright (si no está instalado) ─────────────
-              if [ ! -f /opt/data/.playwright/.installed ]; then
-                echo "[init] Instalando Playwright en PVC..."
-                uv pip install --python /opt/hermes/.venv/bin/python \
-                  --target /opt/data/.pip-packages playwright 2>&1 | tail -3
-                PLAYWRIGHT_BROWSERS_PATH=/opt/data/.playwright/browsers \
-                  PYTHONPATH=/opt/data/.pip-packages \
-                  python3 -m playwright install chromium 2>&1 | tail -3
-                if [ $? -eq 0 ]; then
-                  touch /opt/data/.playwright/.installed
-                  echo "[init] Playwright instalado correctamente"
-                fi
-              else
-                echo "[init] Playwright ya instalado en PVC"
-              fi
+              #if [ ! -f /opt/data/.playwright/.installed ]; then
+              #  echo "[init] Instalando Playwright en PVC..."
+              #  uv pip install --python /opt/hermes/.venv/bin/python \
+              #    --target /opt/data/.pip-packages playwright 2>&1 | tail -3
+              #  PLAYWRIGHT_BROWSERS_PATH=/opt/data/.playwright/browsers \
+              #    PYTHONPATH=/opt/data/.pip-packages \
+              #    python3 -m playwright install chromium 2>&1 | tail -3
+              #  if [ $? -eq 0 ]; then
+              #    touch /opt/data/.playwright/.installed
+              #    echo "[init] Playwright instalado correctamente"
+              #  fi
+              #else
+              #  echo "[init] Playwright ya instalado en PVC"
+              #fi
 
               # ── DuckDuckGo Search (web_search tool) ─────────────
               if ! PYTHONPATH=/opt/data/.pip-packages python3 -c "import ddgs" 2>/dev/null; then
@@ -83,6 +83,21 @@ spec:
               else
                 echo "[init] ddgs ya instalado en PVC"
               fi
+
+              # ── Git config global en PVC antes del clone/pull ──────
+              export GIT_CONFIG_GLOBAL=/opt/data/.gitconfig
+              printf '%s\n' \
+                '[user]' \
+                '  name = Hermes Agent' \
+                '  email = hermes@openclaw.local' \
+                '[safe]' \
+                '  directory = /opt/data/workspace/hermes-repo' \
+                '[credential]' \
+                '  helper = store --file /opt/data/.git-credentials' \
+                > /opt/data/.gitconfig
+              chmod 644 /opt/data/.gitconfig
+              echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
+              chmod 600 /opt/data/.git-credentials
 
               # ── GitHub: clonar repo si no existe ──────────────
               if [ ! -d "$REPO_DIR/.git" ]; then
@@ -124,7 +139,6 @@ spec:
               # Credential helper con PAT en el PVC
               echo "https://jhonalca223-openclaw:${GITHUB_PAT}@github.com" > /opt/data/.git-credentials
               chmod 600 /opt/data/.git-credentials
-
               # ── Chown final ───────────────────────────────────
               chown -R ${HERMES_UID}:${HERMES_UID} /opt/data
           env:
@@ -139,9 +153,9 @@ spec:
               mountPath: /opt/data
       containers:
         - name: hermes
-          image: nousresearch/hermes-agent:v2026.5.29.2
+          image: nousresearch/hermes-agent:v2026.8.3
           imagePullPolicy: IfNotPresent
-          args: ["gateway"]
+          args: ["gateway", "run"]
           env:
             # ── Model Provider (DeepSeek) ────────────────────────
             - name: OPENAI_API_KEY
@@ -182,8 +196,6 @@ spec:
               value: "0.0.0.0"
             - name: HERMES_DASHBOARD_PORT
               value: "9119"
-            - name: HERMES_DASHBOARD_INSECURE
-              value: "true"
             # ── GitHub (autogestión de repo) ───────────────────────
             - name: GITHUB_PAT
               valueFrom:
@@ -199,10 +211,10 @@ spec:
               value: /opt/data/.kube/config
 
             # ── Playwright (GUI Testing) ────────────────────────────
-            - name: PYTHONPATH
-              value: /opt/data/.pip-packages
-            - name: PLAYWRIGHT_BROWSERS_PATH
-              value: /opt/data/.playwright/browsers
+            #- name: PYTHONPATH
+            #  value: /opt/data/.pip-packages
+            #- name: PLAYWRIGHT_BROWSERS_PATH
+            #  value: /opt/data/.playwright/browsers
             # ── PATH extendido (kubectl, chromium, tirith, etc.) ───
             - name: PATH
               value: "/opt/data/bin:/opt/hermes/.venv/bin:/usr/local/bin:/usr/bin:/bin"
