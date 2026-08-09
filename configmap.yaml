@@ -15,7 +15,7 @@ data:
     # Model Configuration — OpenAI Codex (ChatGPT OAuth)
     # =============================================================================
     model:
-      default: "gpt-5.3-codex"
+      default: "gpt-5.4-mini"
       provider: "openai-codex"
       # base_url: auto (chatgpt.com/backend-api/codex via credencial OAuth en auth.json)
       # context_length: 272000   # Auto-detected; set manually if needed
