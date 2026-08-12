@@ -13,6 +13,7 @@ Depliegue de **Hermes Agent** (Nous Research) en k3s vía ArgoCD con GitOps.
 | **Gateway** | Telegram (principal) |
 | **Almacenamiento** | Longhorn PVC (10Gi) |
 | **Modo** | Gateway + CLI + Tools básicos |
+| **ServiceAccount** | `hermes-agent` |
 
 ## 🗂️ Estructura del Repo
 
@@ -108,6 +109,8 @@ La vía OAuth/OIDC sigue existiendo como alternativa, pero no es necesaria
 para este despliegue.
 
 Para agregar más plataformas: editar `configmap.yaml` > `gateway.platforms` y agregar las credenciales en el Secret.
+
+El Deployment usa un ServiceAccount dedicado `hermes-agent`, preparado para autenticación GitOps con Vault Kubernetes auth.
 
 ## 📦 Actualización
 
