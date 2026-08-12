@@ -5,6 +5,7 @@ namespace: hermes
 
 resources:
   - namespace.yaml
+  - serviceaccount.yaml
   - configmap.yaml
   - pvc.yaml
   - service.yaml
