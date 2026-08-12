@@ -22,6 +22,8 @@ spec:
         app.kubernetes.io/component: gateway
         app.kubernetes.io/part-of: hermes
     spec:
+      serviceAccountName: hermes-agent
+      automountServiceAccountToken: true
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-workspace
