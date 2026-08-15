@@ -51,7 +51,7 @@ Document only *where* secrets live, not their values.
 - App users / auth: `hermes-secrets` SealedSecret in namespace `hermes`
 - Git credentials: `hermes-github` SealedSecret → `GITHUB_PAT`
 - Cloud credentials: none documented
-- Secret manager / vault refs: Bitnami SealedSecrets controller in-cluster
+- Secret manager / vault refs: Bitnami SealedSecrets controller in-cluster; Vault access via Kubernetes auth with projected SA JWT at `/var/run/secrets/vault/token`
 - CI/CD secret names: `hermes-secrets`, `hermes-github`
 
 ## Data and storage
@@ -65,7 +65,7 @@ Document only *where* secrets live, not their values.
 - Known pitfalls: repo uses an initContainer to clone/pull itself and restore skills from GitOps; ARM64 kubectl install happens there; `deployment.yaml` mounts `/opt/data` and uses the same PVC for persistent state
 - Health checks: `hermes config` liveness probe, startup probe checks `/opt/data/config.yaml` and `/opt/data/workspace`
 - Rollout expectations: ArgoCD syncs `main`; restart deployment if ConfigMap-only changes must be reloaded immediately
-- Architecture / platform notes: service account is required for pod-side Kubernetes access; repo is optimized for k3s + GitOps on ARM64
+- Architecture / platform notes: service account is required for pod-side Kubernetes access; Vault auth uses a projected JWT with `audience=vault`; repo is optimized for k3s + GitOps on ARM64
 - Recovery / failover notes: if skills are lost on PVC, initContainer repopulates them from the repo clone
 
 ## Verification

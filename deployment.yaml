@@ -23,7 +23,7 @@ spec:
         app.kubernetes.io/part-of: hermes
     spec:
       serviceAccountName: hermes-agent
-      automountServiceAccountToken: true
+      automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-workspace
@@ -223,6 +223,13 @@ spec:
             # ── Opcionales ───────────────────────────────────────
             - name: HERMES_API_TIMEOUT
               value: "1800"
+            # ── Vault (Kubernetes auth via projected SA JWT) ───────────
+            - name: VAULT_ROLE
+              value: "hermes-agent"
+            - name: VAULT_AUTH_PATH
+              value: "kubernetes"
+            - name: VAULT_JWT_PATH
+              value: "/var/run/secrets/vault/token"
           envFrom:
             - secretRef:
                 name: hermes-secrets
@@ -241,6 +248,10 @@ spec:
             # Datos persistentes (memorias, sesiones, skills, .env, workspace)
             - name: hermes-data
               mountPath: /opt/data
+            # JWT proyectado específico para Vault Kubernetes auth
+            - name: vault-token
+              mountPath: /var/run/secrets/vault
+              readOnly: true
           resources:
             requests:
               cpu: "500m"
@@ -266,6 +277,14 @@ spec:
             periodSeconds: 10
             failureThreshold: 30
       volumes:
+        - name: vault-token
+          projected:
+            defaultMode: 0400
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+                  audience: vault
         - name: hermes-config
           configMap:
             name: hermes-config

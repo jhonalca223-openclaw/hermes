@@ -111,6 +111,15 @@ para este despliegue.
 Para agregar más plataformas: editar `configmap.yaml` > `gateway.platforms` y agregar las credenciales en el Secret.
 
 El Deployment usa un ServiceAccount dedicado `hermes-agent`, preparado para autenticación GitOps con Vault Kubernetes auth.
+Además, monta un JWT proyectado en `/var/run/secrets/vault/token` con `audience: vault`, que es el formato esperado por el rol `hermes-agent` en Vault.
+
+Para apuntar a HCP Vault, define `VAULT_ADDR` con el endpoint de HCP y conserva:
+
+- `VAULT_ROLE=hermes-agent`
+- `VAULT_AUTH_PATH=kubernetes`
+- `VAULT_JWT_PATH=/var/run/secrets/vault/token`
+
+La policy `admin` debe existir en Vault y el rol `hermes-agent` debe tenerla asociada.
 
 ## 📦 Actualización
 
