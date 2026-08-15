@@ -224,6 +224,8 @@ spec:
             - name: HERMES_API_TIMEOUT
               value: "1800"
             # ── Vault (Kubernetes auth via projected SA JWT) ───────────
+            - name: VAULT_ADDR
+              value: "http://vault.vault.svc.cluster.local:8200"
             - name: VAULT_ROLE
               value: "hermes-agent"
             - name: VAULT_AUTH_PATH
