@@ -33,6 +33,11 @@ data:
         api_mode: chat_completions
         description: "Ollama en laptop de Kelvin (Qwen 2.5 1.5B)"
 
+      - name: pi-llm
+        base_url: "http://pi-llm.local-ai.svc.cluster.local:8080/v1"
+        api_mode: chat_completions
+        description: "AI Local en k3s para Qwen 2.5 Coder 3B Instruct"
+
     # =============================================================================
     # MCP Servers — Tools externos vía Model Context Protocol
     # =============================================================================

@@ -27,7 +27,7 @@
 - CI/CD: GitOps on `main`
 - Ingress / routing: Istio VirtualService `hermes.kdvops.com`
 - Service mesh / edge / DNS: Istio gateway `istio-system/kdvops-gateway`
-- External dependencies: Telegram bot API, OpenAI/DeepSeek API, GitHub repo access, k8s API, Longhorn storage
+- External dependencies: Telegram bot API, OpenAI/DeepSeek API, GitHub repo access, k8s API, Longhorn storage, local AI provider at `http://pi-llm.local-ai.svc.cluster.local:8080/v1`
 
 ## Bootstrap
 - Install: apply `argo/application.yaml` or let ArgoCD sync `main`
