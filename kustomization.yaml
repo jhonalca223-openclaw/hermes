@@ -13,6 +13,7 @@ resources:
   - deployment.yaml
   - sealed-secrets.yaml
   - sealed-github.yaml
+  - keda-http.yaml
 
 # Secrets sellados vía Bitnami Sealed Secrets
 # Los valores originales SOLO existen en Kubernetes, nunca en git

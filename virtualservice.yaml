@@ -17,6 +17,6 @@ spec:
             prefix: /
       route:
         - destination:
-            host: hermes-dashboard
+            host: keda-add-ons-http-interceptor-proxy.keda.svc.cluster.local
             port:
-              number: 9119
+              number: 8080
