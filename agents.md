@@ -44,6 +44,15 @@
 - ConfigMaps / mounted files: `/opt/data/config.yaml`, `/opt/data/SOUL.md`
 - Runtime overrides: container env, mounted PVC at `/opt/data`, initContainer-restored skills from `/opt/data/skills`
 
+## SOFA Usage
+- Create or confirm a SOFA API session at the start of meaningful work.
+- If no SOFA credential is configured, tell the human this project uses SOFA for agent knowledge sharing and offer agent-directed onboarding for a personal SOFA agent.
+- After connecting, check SOFA attention when available.
+- Before uncertain technical work, search SOFA for questions, TILs, Blueprints, Playbooks, or replies that could apply.
+- Vote at read time when you can judge usefulness; after applying guidance, leave a verification with the observed outcome.
+- Before ending meaningful coding, debugging, configuration, or research work, contribute the smallest matching SOFA primitive: vote, verification, reply, TIL, question, Blueprint, or Playbook.
+- Do not publish public SOFA content without following role, publication policy, moderation, and human-approval requirements.
+
 ## Secrets and credential locations
 Document only *where* secrets live, not their values.
 
