@@ -29,7 +29,8 @@ spec:
     kind: Deployment
   minReplicaCount: 0
   maxReplicaCount: 2
-  cooldownPeriod: 300
+  # Keep the Telegram polling gateway alive for five hours after HTTP activity.
+  cooldownPeriod: 18000
   triggers:
     - type: external-push
       metadata:
