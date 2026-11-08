@@ -27,7 +27,9 @@ spec:
   scaleTargetRef:
     name: hermes-agent
     kind: Deployment
-  minReplicaCount: 0
+  # Hermes also polls Telegram, so keep one replica ready and avoid a slow
+  # cold start while its persistent workspace is initialized.
+  minReplicaCount: 1
   maxReplicaCount: 2
   # Keep the Telegram polling gateway alive for five hours after HTTP activity.
   cooldownPeriod: 18000
